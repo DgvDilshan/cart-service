@@ -1,9 +1,6 @@
 package com.swiftcart.cart_service.service;
 
-import com.swiftcart.cart_service.client.InventoryClient;
-import com.swiftcart.cart_service.client.InventoryResponse;
-import com.swiftcart.cart_service.client.ProductClient;
-import com.swiftcart.cart_service.client.ProductResponse;
+import com.swiftcart.cart_service.client.*;
 import com.swiftcart.cart_service.dtos.AddToCartRequest;
 import com.swiftcart.cart_service.dtos.CartResponse;
 import com.swiftcart.cart_service.exceptions.ResourceNotFoundException;
@@ -68,8 +65,8 @@ public class CartService {
 
         // Inventory Check block
         try {
-            ApiResponse<InventoryResponse> stockResponse = inventoryClient.checkStock(request.productId());
-            Integer stockAvailable = stockResponse.getData().availableQuantity();
+            InventoryClientResponse stockResponse = inventoryClient.checkStock(request.productId());
+            Integer stockAvailable = stockResponse.getData().getActualStock();
 
             // Calculate how many they will have in the cart IF we allow this addition
             int currentQuantityInCart = existingItem.map(CartItem::getQuantity).orElse(0);

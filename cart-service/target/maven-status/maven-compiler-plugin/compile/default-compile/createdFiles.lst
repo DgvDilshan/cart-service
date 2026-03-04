@@ -3,6 +3,7 @@ com\swiftcart\cart_service\dtos\AddToCartRequest.class
 com\swiftcart\cart_service\client\InventoryResponse.class
 com\swiftcart\cart_service\mapper\CartMapper.class
 com\swiftcart\cart_service\exceptions\GlobalExceptionHandler.class
+com\swiftcart\cart_service\client\InventoryClientResponse$InventoryData.class
 com\swiftcart\cart_service\dtos\CartItemResponse.class
 com\swiftcart\cart_service\model\CartItem.class
 com\swiftcart\cart_service\config\WebConfig.class
@@ -17,3 +18,4 @@ com\swiftcart\cart_service\CartServiceApplication.class
 com\swiftcart\cart_service\client\ProductResponse.class
 com\swiftcart\cart_service\model\Cart.class
 com\swiftcart\cart_service\response\ApiResponse.class
+com\swiftcart\cart_service\client\InventoryClientResponse.class

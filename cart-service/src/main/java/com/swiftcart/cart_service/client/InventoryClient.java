@@ -9,5 +9,5 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface InventoryClient {
 
     @GetMapping("/{productId}/stock")
-    ApiResponse<InventoryResponse> checkStock(@PathVariable("productId") Long productId);
+    InventoryClientResponse checkStock(@PathVariable("productId") Long productId);
 }
