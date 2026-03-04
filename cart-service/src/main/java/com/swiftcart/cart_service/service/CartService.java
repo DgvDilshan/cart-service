@@ -1,5 +1,7 @@
 package com.swiftcart.cart_service.service;
 
+import com.swiftcart.cart_service.client.InventoryClient;
+import com.swiftcart.cart_service.client.InventoryResponse;
 import com.swiftcart.cart_service.client.ProductClient;
 import com.swiftcart.cart_service.client.ProductResponse;
 import com.swiftcart.cart_service.dtos.AddToCartRequest;
@@ -22,11 +24,13 @@ public class CartService {
 
     private final CartRepository cartRepository;
     private final ProductClient productClient;
+    private final InventoryClient inventoryClient;
     private final CartMapper cartMapper;
 
-    public CartService(CartRepository cartRepository, ProductClient productClient, CartMapper cartMapper) {
+    public CartService(CartRepository cartRepository, ProductClient productClient, InventoryClient inventoryClient, CartMapper cartMapper) {
         this.cartRepository = cartRepository;
         this.productClient = productClient;
+        this.inventoryClient = inventoryClient;
         this.cartMapper = cartMapper;
     }
 
@@ -38,7 +42,7 @@ public class CartService {
 
     @Transactional
     public CartResponse addItemToCart(AddToCartRequest request) {
-        // 1. Fetch or create a cart for the user
+        // Fetch or create a cart for the user
         Cart cart = cartRepository.findByUserId(request.userId()).orElseGet(() -> {
             Cart newCart = new Cart();
             newCart.setUserId(request.userId());
@@ -61,6 +65,23 @@ public class CartService {
         Optional<CartItem> existingItem = cart.getItems().stream()
                 .filter(item -> item.getProductId().equals(request.productId()))
                 .findFirst();
+
+        // Inventory Check block
+        try {
+            ApiResponse<InventoryResponse> stockResponse = inventoryClient.checkStock(request.productId());
+            Integer stockAvailable = stockResponse.getData().availableQuantity();
+
+            // Calculate how many they will have in the cart IF we allow this addition
+            int currentQuantityInCart = existingItem.map(CartItem::getQuantity).orElse(0);
+            int intendedTotalQuantity = currentQuantityInCart + request.quantity();
+
+            // Check if they are trying to hold more in their cart than we have in the warehouse
+            if (intendedTotalQuantity > stockAvailable) {
+                throw new RuntimeException("Sorry! We only have " + stockAvailable + " of these watches left in stock.");
+            }
+        } catch (FeignException.NotFound e) {
+            throw new ResourceNotFoundException("Inventory record not found for Product ID " + request.productId());
+        }
 
         if (existingItem.isPresent()) {
             // If it exists, just increase the quantity
