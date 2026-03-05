@@ -1,5 +1,8 @@
 package com.swiftcart.identity_service.service;
 
+import com.swiftcart.identity_service.client.NotificationClient;
+import com.swiftcart.identity_service.client.NotificationRequest;
+import com.swiftcart.identity_service.client.NotificationType;
 import com.swiftcart.identity_service.dtos.AuthRequest;
 import com.swiftcart.identity_service.dtos.RegisterRequest;
 import com.swiftcart.identity_service.exceptions.AuthException;
@@ -17,11 +20,14 @@ public class AuthService {
     private final JwtService jwtService;
     private final UserMapper userMapper;
 
-    public AuthService(UserRepository repository, PasswordEncoder passwordEncoder, JwtService jwtService, UserMapper userMapper) {
+    private final NotificationClient notificationClient;
+
+    public AuthService(UserRepository repository, PasswordEncoder passwordEncoder, JwtService jwtService, UserMapper userMapper, NotificationClient notificationClient) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.userMapper = userMapper;
+        this.notificationClient = notificationClient;
     }
 
     public String saveUser(RegisterRequest request) {
@@ -33,6 +39,30 @@ public class AuthService {
         // Encrypt the password before saving to the database
         credential.setPassword(passwordEncoder.encode(request.password()));
         repository.save(credential);
+
+        // Send the Welcome Email!
+        try {
+            NotificationRequest notification = new NotificationRequest();
+
+            // Note: Make sure your User entity has getEmail() and getName() methods!
+            notification.setRecipientEmail(credential.getEmail());
+            notification.setSubject("Welcome to SwiftCart!");
+
+            String welcomeMsg = "Hi " + credential.getName() + ",\n\n" +
+                    "Welcome to SwiftCart! We are thrilled to have you. " +
+                    "Start browsing our latest products today!";
+
+            notification.setMessage(welcomeMsg);
+            notification.setType(NotificationType.WELCOME_MESSAGE);
+
+            // Fire it to the Notification Service
+            notificationClient.sendNotification(notification);
+            System.out.println("Welcome email triggered for: " + credential.getEmail());
+
+        } catch (Exception e) {
+            // Catches the error so registration still succeeds even if mail server fails
+            System.out.println("Could not send welcome email: " + e.getMessage());
+        }
 
         return "User registered successfully";
     }
@@ -53,5 +83,18 @@ public class AuthService {
 
     public void validateToken(String token) {
         jwtService.validateToken(token);
+    }
+
+    public com.swiftcart.identity_service.dtos.UserResponse getUserById(Long id) {
+        User user = repository.findById(id)
+                .orElseThrow(() -> new AuthException("User not found with ID: " + id));
+
+        com.swiftcart.identity_service.dtos.UserResponse response = new com.swiftcart.identity_service.dtos.UserResponse();
+
+        // Ensure these match your actual User entity getters!
+        response.setEmail(user.getEmail());
+        response.setUsername(user.getName());
+
+        return response;
     }
 }
