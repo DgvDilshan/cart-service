@@ -55,7 +55,7 @@ spring:
               filters:
                 - AuthenticationFilter
 
-            # Route 6: Shipping Service
+            # Route 7: Shipping Service
             - id: shipping-service
               uri: lb://SHIPPING-SERVICE
               predicates:
@@ -63,11 +63,27 @@ spring:
               filters:
                 - AuthenticationFilter
 
-            # Route 7: Notification Service
+            # Route 8: Notification Service
             - id: notification-service
               uri: lb://NOTIFICATION-SERVICE
               predicates:
                 - Path=/notifications/**
+              filters:
+                - AuthenticationFilter
+
+            # Route 9: Warranty Service
+            - id: warranty-service
+              uri: lb://WARRANTY-SERVICE
+              predicates:
+                - Path=/warranties/**
+              filters:
+                - AuthenticationFilter
+
+            # Route 10: Review Service
+            - id: review-service
+              uri: lb://REVIEW-SERVICE
+              predicates:
+                - Path=/reviews/**
               filters:
                 - AuthenticationFilter
 
